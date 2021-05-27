@@ -6,9 +6,18 @@ const app = express()
 const mongoose = require('./db/mongoose.js')
 const port = process.env.PORT || 3000
 
-app.use(express.json())
-// app.use(userRouter)
-// app.use(taskRouter)
+
+
+const Student = require('./models/studentModel.js')
+const Teacher = require('./models/teacherModel.js')
+
+const studentRouter = require('./routers/student')
+const teacherRouter = require('./routers/teacher')
+
+// app.use(express.json())
+
+app.use(studentRouter)
+app.use(teacherRouter)
 
 
 
