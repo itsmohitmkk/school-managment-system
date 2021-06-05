@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 //Url Remains the same
 
 
-mongoose.connect('mongodb://127.0.0.1:27017/school-managment-system' , {
+mongoose.connect('mongodb://127.0.0.1:27017/managment' , {
     useNewUrlParser : true,
     useCreateIndex : true
 })

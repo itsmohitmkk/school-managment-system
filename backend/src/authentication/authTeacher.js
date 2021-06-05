@@ -1,16 +1,16 @@
 const jwt = require('jsonwebtoken')
 const { models } = require('mongoose')
-// const User = require('../models/user')
+const Teacher = require('../models/teacherModel')
 
-const auth = async (req,res,next) => {
+const authTeacher = async (req,res,next) => {
 
     try{
         const token = req.header('Authorization').replace('Bearer ' , '')
         const decode = jwt.verify(token , 'thiscourseisshit')
         console.log(decode)
         // decoded token has an id property set in it as given during encription
-        //tokens.token : token is to verify if the user has the token or not if it has expired or nit
-        const user = await User.findOne({_id : decode._id , 'tokens.token' : token})
+        //tokens.token : token is to verify if the user has the token or not if it has expired or not
+        const user = await Teacher.findOne({_id : decode._id , 'tokens.token' : token})
          
         if(!user){
             throw new Error()
@@ -25,4 +25,4 @@ const auth = async (req,res,next) => {
 
 }
 
-module.exports = auth
+module.exports = authTeacher
