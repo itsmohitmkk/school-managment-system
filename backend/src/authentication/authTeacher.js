@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { models } = require('mongoose')
+// const { models } = require('mongoose')
 const Teacher = require('../models/teacherModel')
 
 const authTeacher = async (req,res,next) => {
@@ -20,7 +20,7 @@ const authTeacher = async (req,res,next) => {
         next()      
 
     }catch (e) {
-        res.status(401).send({error :'Please Authenticate'})
+        res.status(401).send({error :'Please Authenticate as Teacher'})
     }
 
 }

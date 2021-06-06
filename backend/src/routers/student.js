@@ -60,18 +60,19 @@ router.post('/student/enrollment' , auth , async(req, res) => {
     
         //If already Enrolled
         const enrolled = (course.access.includes(req.user._id))
-        console.log(enrolled)
-        // const enrolled = course.access.findOne(req.user._id)
+        
 
         if(enrolled)
             throw new Error("Aready Entolled in course")
         
         req.user.enrolledCourse = req.user.enrolledCourse.concat(course)
-    
         await req.user.save()
+    
+    
 
         course.access =  course.access.concat(req.user)
         await course.save()
+       
         
         
         res.status(200).send(course)
@@ -91,7 +92,7 @@ router.delete('/student/deleteCourse' ,auth , async(req,res) =>{
     try{
         //IF its a valid course
         const course = await Course.findOne({name:req.body.name , id: req.body.id})
-
+        console.log(course)
         if(!course)
             throw new Error("No such course is found. Enter Again!!")
 
@@ -106,14 +107,16 @@ router.delete('/student/deleteCourse' ,auth , async(req,res) =>{
         await course.save()
         
         // Deleting from student
+        async function y(){
+            const studentCourse = req.user.enrolledCourse.indexOf(course._id)
+            req.user.enrolledCourse.splice(studentCourse , 1)
+            await req.user.save()
+        }
 
-        const studentCourse = req.user.enrolledCourse.indexOf(course._id)
-        req.user.enrolledCourse.splice(studentCourse , 1)
-        await req.user.save()
+        y()
+
+
         console.log(req.user)
-
-
-
         res.status(200).send(course)
 
     }catch(e){
@@ -126,37 +129,46 @@ router.delete('/student/deleteCourse' ,auth , async(req,res) =>{
 
 // 5. ALL ENROLLED COURSE
 
-router.get('/student/coursesAll' , auth , async (req, res) => {
+router.get('/student/getcourses' , auth , async (req, res) => {
     try{
-        function x(tosearch){
+       
+        const enrolledItem = req.user.enrolledCourse
+        if(req.query.id){
             enrolledItem.forEach(myFunction);
             var done = false 
             async function myFunction(item, index)
             {
                 const course = await Course.findOne({_id: item})
                 console.log(course)
-                if(course.tosearch === tosearch && !done){
+                if(course.id === req.query.id && !done){
                 
                     done = true
                     res.status(200).send(course)
                 }
             }
-        }
-        
-    
-        const enrolledItem = req.user.enrolledCourse
-        if(req.query.id){
-           x(req.query.id)
+
            return
         }
 
 
         if(req.query.name){
-            x(req.query.name)
+            enrolledItem.forEach(myFunction);
+            var done = false 
+            async function myFunction(item, index)
+            {
+                const course = await Course.findOne({_id: item})
+                console.log(course)
+                if(course.name === req.query.name && !done){
+                
+                    done = true
+                    res.status(200).send(course)
+                }
+            }
+
             return
         }
 
-
+        //All the Course a student entrolled in
         res.status(200).send(req.user.enrolledCourse)
     }catch (e){
         console.log(e)
