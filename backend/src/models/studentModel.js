@@ -30,11 +30,11 @@ const studentSchema = new mongoose.Schema({
         type : String,
         require : true,
     },
-    enrolledCourse : [{
-        type : mongoose.Schema.Types.ObjectId,
-        ref :'Course',
+    // enrolledCourse : [{
+    //     type : mongoose.Schema.Types.ObjectId,
+    //     ref :'Course',
         
-    }],
+    // }],
     tokens :[{
         token :{
             type : String,
@@ -44,7 +44,7 @@ const studentSchema = new mongoose.Schema({
 })
 
 //1. Linking
-studentSchema.virtual('courses' , {
+studentSchema.virtual('course' , {
     ref : 'Course',
     localField : '_id',
     foreignField : 'access'

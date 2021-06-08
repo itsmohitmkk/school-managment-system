@@ -56,22 +56,21 @@ router.post('/teacher/courseCreation' , authT , async(req, res) => {
         const course = await Course.findOne({name:req.body.name , id: req.body.id})
 
         if(course)
-            throw new Error("Course AREADY found. Enter Again!!")
+            throw new Error("Course already found. Enter Again!!")
     
-        const newCourse = new Course({
-            //ES6 function to set description and completed and id is loaded manually
+        const newCourse = new Course({            
             ...req.body,
             owner : req.user
         })
         await newCourse.save()
         
-        async function x(){
-        req.user.createdCourse = req.user.createdCourse.concat(newCourse)
-        await req.user.save()
-        }
+        // async function x(){
+        // req.user.createdCourse = req.user.createdCourse.concat(newCourse)
+        // await req.user.save()
+        // }
 
-        x()
-        console.log(req.user)
+        // x()
+        // console.log(req.user)
         res.status(200).send(newCourse)
 
     }catch(error){
@@ -86,51 +85,23 @@ router.post('/teacher/courseCreation' , authT , async(req, res) => {
 //4. DELETION IN THE COURSES
 
 router.delete('/teacher/deleteCourse' ,authT , async(req,res) =>{
-    
+
     try{
-
-        //Is the course is created by that teacher
         
-        const enrolledItem = req.user.createdCourse
-        enrolledItem.forEach(myFunction);
-        var done = false 
-        let courseID
-        let deletedCourse
-        async function myFunction(item, index)
-        {
-            const course = await Course.findOne({_id: item})
-            
-            if(course.id ===req.body.id && !done){
-            
-                done = true
-                deletedCourse = await Course.findOneAndDelete({name:req.body.name , id: req.body.id})
-                courseID = deletedCourse._id
-            }
+        //IS COUSE PRESENT??
+        const course = await Course.findOne({name:req.body.name , id: req.body.id})
+
+        if(course)
+            throw new Error("Course already found. Enter Again!!")
+    
+        
+        //IS COURSE CREATED BY THAT TEACHER??
+        if(req.user._id !== course.owner._id){
+            throw new Error("You have not created this course")
         }
 
-
-        //If its a valid course
-        
-        if(deletedCourse || !courseID )
-            throw new Error("No such course is found. Enter Again!!")
-
-        
-        
-        // Deleting from Teacher
-        async function x(courseID){
-            console.log("********************")
-            console.log(deletedCourse)
-            const teacherCourse = req.user.createdCourse.indexOf(courseID)
-            req.user.createdCourse.splice(teacherCourse , 1)
-            await req.user.save()
-            
-
-        }
-
-        x(courseID)
-
-
-        res.status(200).send(deletedCourse)
+        // await Course.findOneAndDelete({name:req.body.name , id: req.body.id})
+        await course.delete()
 
     }catch(e){
         console.log(e)
@@ -144,46 +115,29 @@ router.delete('/teacher/deleteCourse' ,authT , async(req,res) =>{
 router.get('/teacher/getcourses' , authT , async (req, res) => {
     try{
        
-        const enrolledItem = req.user.createdCourse
+        let course
         if(req.query.id){
-            enrolledItem.forEach(myFunction);
-            var done = false 
-            async function myFunction(item, index)
-            {
-                const course = await Course.findOne({_id: item})
-                console.log(course)
-                if(course.id === req.query.id && !done){
-                
-                    done = true
-                    res.status(200).send(course)
-                }
-            }
-
-           return
+             course = await Course.findOne({id:req.query.id , owner : req.user._id })
+           
         }
 
 
-        if(req.query.name){
-            enrolledItem.forEach(myFunction);
-            var done = false 
-            async function myFunction(item, index)
-            {
-                const course = await Course.findOne({_id: item})
-                console.log(course)
-                if(course.name === req.query.name && !done){
-                
-                    done = true
-                    res.status(200).send(course)
-                }
-            }
-
-            return
+        else if(req.query.name){
+             course = await Course.findOne({name:req.query.name , owner : req.user._id })            
+        
         }
 
-        //All the Course a student entrolled in
-        res.status(200).send(req.user.createdCourse)
+        else{
+            course = await Course.find({owner : req.user._id})
+        }
+
+        if(!course){
+            throw new Error("No course is found")
+        }
+        res.status(200).send(course)
     }catch (e){
         console.log(e)
+        res.status(400).send(e)
     }
 })
 
@@ -193,59 +147,75 @@ router.get('/teacher/getcourses' , authT , async (req, res) => {
 
 router.patch('/teacher/update' ,authT, async(req, res) =>{
 
-    const  options = ['name' , 'id']
-    const provided = Object.keys(req.body)
-    //for checking the vlidity for it
-    const isValid = provided.every((item) =>{
-        return  options.includes(item)
-    })
+    // const  options = ['name' , 'id']
+    // const provided = Object.keys(req.body)
+    // //for checking the vlidity for it
+    // const isValid = provided.every((item) =>{
+    //     return  options.includes(item)
+    // })
     
-    if(!isValid){
-        return res.status(404).send("Please Enter a valid operation")
-    }
+    // if(!isValid){
+    //     return res.status(404).send("Please Enter a valid operation")
+    // }
+
+    // try{
+    //     console.log(req.query)
+
+    //     //Parameter for which course to update
+    //     let course
+    //     if(req.query.id){
+    //         course = await Course.findOne({id:req.query.id})
+    //     }
+    //     else if(req.query.name){
+    //         course = await Course.findOne({name:req.query.name})
+    //     }else{
+    //         throw new Error("Please provide a course name/id to update")
+    //     }
+
+    //     if(!course){
+    //         return res.status(500).send("No such Course")
+    //     }
+
+    //     provided.forEach(myFunction)
+
+    //      function myFunction(item, index)
+    //     {
+    //         if(item === "name"){
+    //             course.name = req.body.name
+    //         }
+    //         if(item === "id"){
+    //             course.id = req.body.id
+    //         }
+    //     }
+    //     // console.log(course)
+    //     await course.save()
+
+
+
+    // dlmdc
+
+    // }catch(e) {
+    //     console.log(e)
+    //     res.status(500).send(e)
+    // }
 
     try{
-        console.log(req.query)
 
-        //Parameter for which course to update
-        let course
-        if(req.query.id){
-            course = await Course.findOne({id:req.query.id})
-        }
-        else if(req.query.name){
-            course = await Course.findOne({name:req.query.name})
-        }else{
-            throw new Error("Please provide a course name/id to update")
+        //FIND IF COURSE IS PRESENT AND THAT TEACHER OWNS IT
+        const course = await Course.updateOne({owner:req.user._id, name:req.query.name} , {name: req.body.name , id:req.body.id })
+
+        if(course.n === 0){
+            throw new Error("Unable to find the course")
         }
 
-        if(!course){
-            return res.status(500).send("No such Course")
-        }
 
-        provided.forEach(myFunction)
+        res.status(200).send(course.n)
 
-         function myFunction(item, index)
-        {
-            if(item === "name"){
-                course.name = req.body.name
-            }
-            if(item === "id"){
-                course.id = req.body.id
-            }
-        }
-        // console.log(course)
-        await course.save()
-
-    }catch(e) {
-        console.log(e)
+    }catch(e){
         res.status(500).send(e)
     }
+
 })
-
-
-
-
-
 
 
 module.exports = router

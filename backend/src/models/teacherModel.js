@@ -28,10 +28,10 @@ const teacherSchema = new mongoose.Schema({
         default: false
     },
     //It contaid ID of the user who created the task
-    createdCourse : [{
-        type : mongoose.Schema.Types.ObjectId,
-        ref :'Course'
-    }],
+    // createdCourse : [{
+    //     type : mongoose.Schema.Types.ObjectId,
+    //     ref :'Course'
+    // }],
     tokens :[{
         token :{
             type : String,
@@ -41,7 +41,7 @@ const teacherSchema = new mongoose.Schema({
 })
 
 //1. Awhich teacher is owner of which course
-teacherSchema.virtual('courses' , {
+teacherSchema.virtual('course-teacher' , {
     ref : 'Course',
     localField : '_id',
     foreignField : 'owner'

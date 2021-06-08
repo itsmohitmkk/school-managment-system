@@ -15,16 +15,29 @@ const courseSchema = new mongoose.Schema({
     },
   
     
-    owner : [{
+    owner : {
         type : mongoose.Schema.Types.ObjectId,
+        required : true,
         ref :'Teacher',
         
-    }],
+    },
     access : [{
         type : mongoose.Schema.Types.ObjectId,       
         ref :'Student'
     }]
 })
+
+courseSchema.virtual('courseStudent' , {
+        ref : 'Student',
+        localField : '_id',
+        foreignField : 'access'
+})
+
+// courseSchema.virtual('course-teacher' , {
+//     ref : 'Teacher',
+//     localField : '_id',
+//     foreignField : 'owner'
+// })
 
 //ID => Teacher/Student ID
 //id => Course ID
