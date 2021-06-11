@@ -5,7 +5,6 @@ const authT = require('../authentication/authTeacher')
 const Course = require('../models/courseModel')
 
 
-
 //1. CREATING THE TEACHER
 router.post('/teacher' , async (req,res) =>{
     console.log(req.body)
@@ -37,7 +36,7 @@ router.post('/teacher/login' ,  async(req,res) =>{
 })
 
 
-//3. LOGOUT OF  
+//3. LOGOUT OF  DEVICE
 router.post('/teacher/logout' ,authT , async(req ,res) => {
     try{
         req.user.tokens = []
@@ -50,7 +49,6 @@ router.post('/teacher/logout' ,authT , async(req ,res) => {
 
 
 //4. CREATING IN THE COURSES
-
 router.post('/teacher/courseCreation' , authT , async(req, res) => {
     try{
         const course = await Course.findOne({name:req.body.name , id: req.body.id})
@@ -63,14 +61,6 @@ router.post('/teacher/courseCreation' , authT , async(req, res) => {
             owner : req.user
         })
         await newCourse.save()
-        
-        // async function x(){
-        // req.user.createdCourse = req.user.createdCourse.concat(newCourse)
-        // await req.user.save()
-        // }
-
-        // x()
-        // console.log(req.user)
         res.status(200).send(newCourse)
 
     }catch(error){
@@ -79,7 +69,6 @@ router.post('/teacher/courseCreation' , authT , async(req, res) => {
     }
 
 })
-
 
 
 //4. DELETION IN THE COURSES
@@ -147,58 +136,6 @@ router.get('/teacher/getcourses' , authT , async (req, res) => {
 
 router.patch('/teacher/update' ,authT, async(req, res) =>{
 
-    // const  options = ['name' , 'id']
-    // const provided = Object.keys(req.body)
-    // //for checking the vlidity for it
-    // const isValid = provided.every((item) =>{
-    //     return  options.includes(item)
-    // })
-    
-    // if(!isValid){
-    //     return res.status(404).send("Please Enter a valid operation")
-    // }
-
-    // try{
-    //     console.log(req.query)
-
-    //     //Parameter for which course to update
-    //     let course
-    //     if(req.query.id){
-    //         course = await Course.findOne({id:req.query.id})
-    //     }
-    //     else if(req.query.name){
-    //         course = await Course.findOne({name:req.query.name})
-    //     }else{
-    //         throw new Error("Please provide a course name/id to update")
-    //     }
-
-    //     if(!course){
-    //         return res.status(500).send("No such Course")
-    //     }
-
-    //     provided.forEach(myFunction)
-
-    //      function myFunction(item, index)
-    //     {
-    //         if(item === "name"){
-    //             course.name = req.body.name
-    //         }
-    //         if(item === "id"){
-    //             course.id = req.body.id
-    //         }
-    //     }
-    //     // console.log(course)
-    //     await course.save()
-
-
-
-    // dlmdc
-
-    // }catch(e) {
-    //     console.log(e)
-    //     res.status(500).send(e)
-    // }
-
     try{
 
         //FIND IF COURSE IS PRESENT AND THAT TEACHER OWNS IT
@@ -207,8 +144,7 @@ router.patch('/teacher/update' ,authT, async(req, res) =>{
         if(course.n === 0){
             throw new Error("Unable to find the course")
         }
-
-
+        
         res.status(200).send(course.n)
 
     }catch(e){
@@ -216,6 +152,126 @@ router.patch('/teacher/update' ,authT, async(req, res) =>{
     }
 
 })
+// attendAndMarks: Query: ?present=true/false
+router.post('/course/:id/attendAndMarks/:usn/:date', authT, async (req, res) => {
+    console.log(req.params)
+    try {
+        const course = await Course.findOne({ id: req.params.id })
+        console.log(course)
+        if (!course) {
+            throw new Error('Course with id ' + req.params.id + ' does not exist')
+        }
 
+        const index = course.attendAndMarks.findIndex(student => student.usn === req.params.usn)
+        if (index === -1) {
+            throw new Error('No student with USN ' + req.params.usn + ' found')
+        }
+        course.attendAndMarks[index].dates = course.attendAndMarks[index].dates.concat({ date: req.params.date, present: (req.query.present === 'true' ? true:false) })
+
+        await course.save()
+        res.status(200).send(course.attendAndMarks[index])
+    } catch (e) {
+        console.log(e);
+        res.status(500).send(e)
+    }
+})
+
+
+router.get('/course/:id/attendAndMarks/:usn', async (req, res) => {
+    try {
+        const course = await Course.findOne({ id: req.params.id })
+        if (!course) {
+            throw new Error('Course with id ' + req.params.id + ' does not exist')
+        }
+
+        const index = course.attendAndMarks.findIndex(student => student.usn === req.params.usn)
+        if (index === -1) {
+            throw new Error('No student with USN ' + req.params.usn + ' found')
+        }
+        const present = course.attendAndMarks[index].dates.filter(date => date.present).length
+        const absent = course.attendAndMarks[index].dates.length - present
+
+        res.status(200).send({ ...course.attendAndMarks[index].dates, present, absent, totalLectures: present+absent })
+        
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+// SCORING THE MARKS
+
+router.post('/course/:id/scoring/:usn/:examType/:marks' , authT , async(req , res) =>{
+    try{
+        const course = await Course.findOne({ id: req.params.id })
+        if(!course){
+            throw new Error('No such course is found')
+        }
+        const index = course.attendAndMarks.findIndex(student => student.usn === req.params.usn)
+        if (index === -1) {
+            throw new Error('No student with USN ' + req.params.usn + ' found')
+        }
+        console.log(index)
+        course.attendAndMarks[index].marks = course.attendAndMarks[index].marks.concat({examType : req.params.examType.toLowerCase() , score:req.params.marks})
+        
+        await course.save()
+
+        res.status(200).send(course.attendAndMarks)
+
+    }catch(e){
+        console.log(e)
+        res.status(500).send(e)
+    }
+
+})
+
+router.get('/course/:id/getscore/:usn' , async(req , res)=>{
+    try{
+
+        const course = await Course.findOne({ id: req.params.id })
+        if(!course){
+            throw new Error('No such course is found')
+        }
+        const index = course.attendAndMarks.findIndex(student => student.usn === req.params.usn)
+        if (index === -1) {
+            throw new Error('No student with USN ' + req.params.usn + ' found')
+        }
+
+        let score = 0;
+        let total = 0;
+        let allscore = [] 
+        for(var i =0 , l =course.attendAndMarks[index].marks.length ;i<l ; i++){
+            let mark = course.attendAndMarks[index].marks[i]
+            allscore.push({"Exam" :mark.examType , "Marks" : mark.score})
+            if(mark.examType.startsWith('q') ){
+                total += 15
+                score += mark.score
+            }
+            else if(mark.examType.startsWith('i')){
+                total += 50
+                score += mark.score
+            }
+
+            else if (mark.examType.startsWith('e')) {
+                total += 100
+                score += mark.score
+            }
+        }
+
+            const analysis = {
+                "score" : score,
+                "total" : total,
+                "Current Percentage" : (score / total) * 100
+            }
+   
+            res.status(200).send({allscore , analysis })
+        
+
+
+    }catch(e){
+        console.log(e)
+        res.status(500).send(e)
+    }
+
+})
 
 module.exports = router

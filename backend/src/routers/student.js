@@ -26,7 +26,7 @@ router.post('/student' , async (req,res) =>{
 // 2. LOGGING IN OF STUDENTS
 router.post('/student/login' ,  async(req,res) =>{
     try{
-        const user =  await Student.findByCredentials(req.body.email , req.body.password, req.body.USN)
+        const user =  await Student.findByCredentials(req.body.email , req.body.password)
         
         const token = await user.generateTokens()
     
@@ -52,36 +52,6 @@ router.post('/student/logout' ,auth , async(req ,res) => {
 //4. ENROLLMENT IN THE COURSES
 
 router.post('/student/enrollment' , auth , async(req, res) => {
-    // try{
-    //     const course = await Course.findOne({name:req.body.name , id: req.body.id })
-
-    //     if(!course)
-    //         throw new Error("No such course is found. Enter Again!!  or aleady Resgisted")
-    
-    //     //If already Enrolled
-    //     const enrolled = (course.access.includes(req.user._id))
-        
-
-    //     if(enrolled)
-    //         throw new Error("Aready Entolled in course")
-        
-    //     req.user.enrolledCourse = req.user.enrolledCourse.concat(course)
-    //     await req.user.save()
-    
-    
-
-    //     course.access =  course.access.concat(req.user)
-    //     await course.save()
-       
-        
-        
-    //     res.status(200).send(course)
-    //     console.log(req.user)
-
-    // }catch(error){
-    //     console.log(error)
-    //     res.status(400).send(error)
-    // }
 try{
 
     const course = await Course.findOne({name:req.body.name , id:req.body.id})
@@ -94,6 +64,7 @@ try{
         throw new Error('Aready Registed')
     }else{
         course.access = course.access.concat(req.user)
+        course.attendAndMarks = course.attendAndMarks.concat({usn : req.user.USN , dates : [] , marks :[]})
         await course.save()
     }
 

@@ -30,11 +30,6 @@ const studentSchema = new mongoose.Schema({
         type : String,
         require : true,
     },
-    // enrolledCourse : [{
-    //     type : mongoose.Schema.Types.ObjectId,
-    //     ref :'Course',
-        
-    // }],
     tokens :[{
         token :{
             type : String,
@@ -53,18 +48,18 @@ studentSchema.virtual('course' , {
 //2. Logging In
 
 
-studentSchema.statics.findByCredentials = async(email , password , USN) => {
-    const user = await Student.findOne({email})
+studentSchema.statics.findByCredentials = async(email , password) => {
+    const user = await Student.findOne({email :email , password:password})
     if(!user){
         throw new Error("Unable to Login")
     }
 
-    const isMatchpass = password === user.password
-    const isMatchUSN = USN === user.USN
+    // const isMatchpass = password === user.password
+    // const isMatchUSN = USN === user.USN
     // console.log(isMatchUSN , isMatchpass)
-    if(!isMatchpass || !isMatchUSN){
-        throw new Error("Unable to Login")
-    }
+    // if(!isMatchpass ){
+    //     throw new Error("Unable to Login")
+    // }
 
     return user
 }
