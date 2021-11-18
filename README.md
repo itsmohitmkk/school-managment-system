@@ -2,8 +2,7 @@
 
 
 ### Installation
-git clone https://github.com/shandli123/school-managment-application.git
-
+git clone https://github.com/itsmohitmkk/school-managment-system.git
 
 Run npm install
 
